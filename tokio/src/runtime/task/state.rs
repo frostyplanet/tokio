@@ -252,7 +252,10 @@ impl State {
     /// Transitions the state to `NOTIFIED`.
     pub(super) fn transition_to_notified_by_ref(&self) -> TransitionToNotifiedByRef {
         self.fetch_update_action(|mut snapshot| {
-            if snapshot.is_complete() || snapshot.is_notified() {
+            if snapshot.is_complete() {
+                (TransitionToNotifiedByRef::DoNothing, None)
+            } else if snapshot.is_notified() {
+                tracing::debug!("waker.wake_by_ref (notified)");
                 // There is nothing to do in this case.
                 (TransitionToNotifiedByRef::DoNothing, None)
             } else if snapshot.is_running() {
@@ -260,6 +263,7 @@ impl State {
                 // not submit as the thread currently running the future is
                 // responsible for that.
                 snapshot.set_notified();
+                tracing::debug!("waker.wake_by_ref (running)");
                 (TransitionToNotifiedByRef::DoNothing, Some(snapshot))
             } else {
                 tracing::debug!("waker.wake_by_ref (idle)");
