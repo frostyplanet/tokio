@@ -1079,7 +1079,6 @@ impl Handle {
 
     fn schedule_local(&self, core: &mut Core, task: Notified, is_yield: bool) {
         core.stats.inc_local_schedule_count();
-
         // Spawning from the worker thread. If scheduling a "yield" then the
         // task must always be pushed to the back of the queue, enabling other
         // tasks to be executed. If **not** a yield, then there is more
@@ -1097,9 +1096,10 @@ impl Handle {
                 core.run_queue
                     .push_back_or_overflow(prev, self, &mut core.stats);
             }
-
+            if !ret {
+                tracing::debug!("task {:?} schedule_local skip", task.task_id());
+            }
             core.lifo_slot = Some(task);
-
             ret
         };
 
@@ -1108,6 +1108,8 @@ impl Handle {
         // batches, the notification is delayed until the park is complete.
         if should_notify && core.park.is_some() {
             self.notify_parked_local();
+        } else {
+            tracing::debug!("schedule_local skip notify");
         }
     }
 
@@ -1153,6 +1155,8 @@ impl Handle {
     fn notify_parked_remote(&self) {
         if let Some(index) = self.shared.idle.worker_to_notify(&self.shared) {
             self.shared.remotes[index].unpark.unpark(&self.driver);
+        } else {
+            tracing::debug!("notify_park_remote skip");
         }
     }
 
