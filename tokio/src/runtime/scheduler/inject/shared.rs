@@ -4,7 +4,7 @@ use crate::loom::sync::atomic::AtomicUsize;
 use crate::runtime::task;
 
 use std::marker::PhantomData;
-use std::sync::atomic::Ordering::{Acquire, Release};
+use std::sync::atomic::Ordering::SeqCst;
 
 pub(crate) struct Shared<T: 'static> {
     /// Number of pending tasks in the queue. This helps prevent unnecessary
@@ -55,7 +55,9 @@ impl<T: 'static> Shared<T> {
     }
 
     pub(crate) fn len(&self) -> usize {
-        self.len.load(Acquire)
+        // Inject::pop() check is_empty() without lock,
+        // should use SeqCst here to establish synced-with between different threads.
+        self.len.load(SeqCst)
     }
 
     /// Pushes a value into the queue.
@@ -86,7 +88,9 @@ impl<T: 'static> Shared<T> {
         }
 
         synced.tail = Some(task);
-        self.len.store(len + 1, Release);
+        // Inject::pop() check is_empty() without lock,
+        // should use SeqCst here to establish synced-with between different threads.
+        self.len.store(len + 1, SeqCst);
     }
 
     /// Pop a value from the queue.
@@ -114,7 +118,9 @@ impl<T: 'static> Shared<T> {
         let n = cmp::min(n, len);
 
         // Decrement the count.
-        self.len.store(len - n, Release);
+        // Inject::pop() check is_empty() without lock,
+        // should use SeqCst here to establish synced-with between different threads.
+        self.len.store(len - n, SeqCst);
 
         Pop::new(n, synced)
     }
