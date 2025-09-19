@@ -195,6 +195,7 @@ where
 
         match self.state().transition_to_running() {
             TransitionToRunning::Success => {
+                tracing::debug!("task {} transition_to_running {:?} suc", self.core().task_id, self.state().load());
                 // Separated to reduce LLVM codegen
                 fn transition_result_to_poll_future(result: TransitionToIdle) -> PollFuture {
                     match result {
@@ -215,6 +216,7 @@ where
                 }
 
                 let transition_res = self.state().transition_to_idle();
+                tracing::debug!("task {} transition_to_idle {:?}", self.core().task_id, transition_res);
                 if let TransitionToIdle::Cancelled = transition_res {
                     // The transition to idle failed because the task was
                     // cancelled during the poll.
@@ -226,8 +228,14 @@ where
                 cancel_task(self.core());
                 PollFuture::Complete
             }
-            TransitionToRunning::Failed => PollFuture::Done,
-            TransitionToRunning::Dealloc => PollFuture::Dealloc,
+            TransitionToRunning::Failed => {
+                tracing::debug!("task {} transition_to_running failed", self.core().task_id);
+                return PollFuture::Done;
+            }
+            TransitionToRunning::Dealloc => {
+                tracing::debug!("task {} transition_to_running dealloc", self.core().task_id);
+                return PollFuture::Dealloc;
+            }
         }
     }
 

@@ -68,6 +68,7 @@ pub(super) enum TransitionToRunning {
     Dealloc,
 }
 
+#[derive(Debug)]
 #[must_use]
 pub(super) enum TransitionToIdle {
     Ok,
