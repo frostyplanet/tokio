@@ -9,7 +9,7 @@ members = [
 
   # Internal
   "benches",
-  "examples",
+#  "examples",
   "stress-test",
   "tests-build",
   "tests-integration",
