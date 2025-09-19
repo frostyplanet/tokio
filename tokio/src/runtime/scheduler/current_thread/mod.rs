@@ -386,6 +386,7 @@ impl Context {
             // Park until the thread is signaled
             core.metrics.about_to_park();
             core.submit_metrics(handle);
+            log::debug!("park due to core.tasks.is_empty");
 
             let (c, ()) = self.enter(core, || {
                 driver.park(&handle.driver);
@@ -393,6 +394,7 @@ impl Context {
             });
 
             core = c;
+            log::debug!("unpark");
 
             core.metrics.unparked();
             core.submit_metrics(handle);
@@ -655,7 +657,7 @@ impl Schedule for Arc<Handle> {
             _ => {
                 // Track that a task was scheduled from **outside** of the runtime.
                 self.shared.scheduler_metrics.inc_remote_schedule_count();
-
+                log::debug!("task {:?} outside push", task.task_id());
                 // Schedule the task
                 self.shared.inject.push(task);
                 self.driver.unpark();
@@ -776,6 +778,7 @@ impl CoreGuard<'_> {
                             continue 'outer;
                         }
                     };
+                    log::debug!("run task {:?}", task.task_id());
 
                     let task = context.handle.shared.owned.assert_owner(task);
 
