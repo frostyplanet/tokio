@@ -1066,6 +1066,7 @@ impl Handle {
             }
 
             // Otherwise, use the inject queue.
+            tracing::debug!("task {:?} push_remote", task.task_id());
             self.push_remote_task(task);
             self.notify_parked_remote();
         });
@@ -1079,12 +1080,15 @@ impl Handle {
 
     fn schedule_local(&self, core: &mut Core, task: Notified, is_yield: bool) {
         core.stats.inc_local_schedule_count();
-
+        if core.park.is_none() {
+            tracing::debug!("task {:?} schedule_local skip: park is none", task.task_id());
+        }
         // Spawning from the worker thread. If scheduling a "yield" then the
         // task must always be pushed to the back of the queue, enabling other
         // tasks to be executed. If **not** a yield, then there is more
         // flexibility and the task may go to the front of the queue.
         let should_notify = if is_yield || !core.lifo_enabled {
+            tracing::debug!("task {:?} schedule_local push", task.task_id());
             core.run_queue
                 .push_back_or_overflow(task, self, &mut core.stats);
             true
@@ -1097,9 +1101,12 @@ impl Handle {
                 core.run_queue
                     .push_back_or_overflow(prev, self, &mut core.stats);
             }
-
+            if ret {
+                tracing::debug!("task {:?} schedule_local should_notify", task.task_id());
+            } else {
+                tracing::debug!("task {:?} schedule_local skip lifo", task.task_id());
+            }
             core.lifo_slot = Some(task);
-
             ret
         };
 

@@ -268,6 +268,7 @@ impl State {
                 tracing::debug!("waker.wake_by_ref (running)");
                 (TransitionToNotifiedByRef::DoNothing, Some(snapshot))
             } else {
+                tracing::debug!("waker.wake_by_ref (idle)");
                 // The task is idle and not notified. We should submit a
                 // notification.
                 snapshot.set_notified();
