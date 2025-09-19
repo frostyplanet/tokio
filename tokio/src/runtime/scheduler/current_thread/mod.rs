@@ -386,6 +386,7 @@ impl Context {
             // Park until the thread is signaled
             core.metrics.about_to_park();
             core.submit_metrics(handle);
+            tracing::debug!("park due to core.tasks.is_empty");
 
             let (c, ()) = self.enter(core, || {
                 driver.park(&handle.driver);
@@ -393,6 +394,7 @@ impl Context {
             });
 
             core = c;
+            tracing::debug!("unpark");
 
             core.metrics.unparked();
             core.submit_metrics(handle);
@@ -779,6 +781,7 @@ impl CoreGuard<'_> {
                             continue 'outer;
                         }
                     };
+                    tracing::debug!("run task {:?}", task.task_id());
 
                     let task = context.handle.shared.owned.assert_owner(task);
 
