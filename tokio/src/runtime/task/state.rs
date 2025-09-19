@@ -256,7 +256,7 @@ impl State {
                 // The complete state is final
                 (TransitionToNotifiedByRef::DoNothing, None)
             } else if snapshot.is_notified() {
-                // Even hough we have nothing to do in this branch,
+                // Even though we have nothing to do in this branch,
                 // wake_by_ref() should synchronize-with the task starting execution,
                 // therefore we must use an Release store (with the same value),
                 // to pair with the Acquire in transition_to_running.
