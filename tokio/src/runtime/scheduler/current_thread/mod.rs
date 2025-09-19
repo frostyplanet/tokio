@@ -649,13 +649,16 @@ impl Schedule for Arc<Handle> {
                 // If `None`, the runtime is shutting down, so there is no need
                 // to schedule the task.
                 if let Some(core) = core.as_mut() {
+                    tracing::debug!("task {:?} push cx", task.task_id());
                     core.push_task(self, task);
+                } else {
+                    tracing::debug!("task {:?} push cx None", task.task_id());
                 }
             }
             _ => {
                 // Track that a task was scheduled from **outside** of the runtime.
                 self.shared.scheduler_metrics.inc_remote_schedule_count();
-
+                tracing::debug!("task {:?} outside push", task.task_id());
                 // Schedule the task
                 self.shared.inject.push(task);
                 self.driver.unpark();
