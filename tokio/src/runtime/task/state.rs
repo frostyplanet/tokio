@@ -266,10 +266,12 @@ impl State {
                 // not submit as the thread currently running the future is
                 // responsible for that.
                 snapshot.set_notified();
+                log::debug!("waker.wake_by_ref (running)");
                 (TransitionToNotifiedByRef::DoNothing, Some(snapshot))
             } else {
                 // The task is idle and not notified. We should submit a
                 // notification.
+                log::debug!("waker.wake_by_ref (idle)");
                 snapshot.set_notified();
                 snapshot.ref_inc();
                 (TransitionToNotifiedByRef::Submit, Some(snapshot))
